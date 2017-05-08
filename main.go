@@ -1,15 +1,26 @@
 package main
 
 import (
-	health "github.com/Financial-Times/go-fthealth/v1_1"
-	status "github.com/Financial-Times/service-status-go/httphandlers"
-	log "github.com/Sirupsen/logrus"
-	"github.com/jawher/mow.cli"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+
+	health "github.com/Financial-Times/go-fthealth/v1_1"
+	status "github.com/Financial-Times/service-status-go/httphandlers"
+	log "github.com/Sirupsen/logrus"
+	"github.com/jawher/mow.cli"
 )
+
+func init() {
+	f := &log.TextFormatter{
+		FullTimestamp:   true,
+		TimestampFormat: time.RFC3339Nano,
+	}
+
+	log.SetFormatter(f)
+}
 
 func main() {
 	app := cli.App("list-history-rw", "A microservice to write list history to MongoDB")
@@ -42,7 +53,7 @@ func main() {
 		log.Infof("System code: %s, App Name: %s, Port: %s", *appSystemCode, *appName, *port)
 
 		go func() {
-			serveAdminEndpoints(*appSystemCode, *appName, *port)
+			serveEndpoints(*appSystemCode, *appName, *port)
 		}()
 
 		// todo: insert app code here
@@ -56,7 +67,7 @@ func main() {
 	}
 }
 
-func serveAdminEndpoints(appSystemCode string, appName string, port string) {
+func serveEndpoints(appSystemCode string, appName string, port string) {
 	healthService := newHealthService(&healthConfig{appSystemCode: appSystemCode, appName: appName, port: port})
 
 	serveMux := http.NewServeMux()
